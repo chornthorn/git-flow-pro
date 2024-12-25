@@ -1,6 +1,5 @@
 #!/bin/zsh
 
-# Remote installer for Git Flow Pro
 VERSION="1.0.0"
 REPO_URL="https://github.com/chornthorn/git-flow-pro.git"
 TEMP_DIR="/tmp/git-flow-pro-install"
@@ -10,36 +9,27 @@ echo "=============================="
 
 # System checks
 check_requirements() {
-    # Check for zsh
     if [ -z "$ZSH_VERSION" ]; then
         echo "❌ Error: This script requires Zsh shell"
-        echo "Please install Zsh and try again"
+        echo "Current shell: $SHELL"
+        echo "Try: zsh -c \"\$(curl -fsSL <script-url>)\""
         exit 1
     fi
 
-    # Check for git
     if ! command -v git >/dev/null 2>&1; then
         echo "❌ Error: Git is not installed"
         echo "Please install Git and try again"
         exit 1
     fi
 
-    # Check for curl or wget
-    if ! command -v curl >/dev/null 2>&1 && ! command -v wget >/dev/null 2>&1; then
-        echo "❌ Error: This script requires curl or wget"
-        echo "Please install either curl or wget and try again"
-        exit 1
-    fi
-
-    # Ensure backup directory exists
-    mkdir -p "$HOME/.git-flow-pro/backups"
-}
-
-# Install git-flow if needed
-install_gitflow() {
+    # Check for git-flow
     if ! command -v git-flow >/dev/null 2>&1; then
         echo "📦 Installing git-flow..."
         if [[ "$OSTYPE" == "darwin"* ]]; then
+            if ! command -v brew >/dev/null 2>&1; then
+                echo "❌ Homebrew is required to install git-flow"
+                exit 1
+            fi
             brew install git-flow
         elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
             sudo apt-get update && sudo apt-get install -y git-flow
@@ -50,16 +40,14 @@ install_gitflow() {
     fi
 }
 
-# Main installation process
+# Install process
 main() {
     check_requirements
-    install_gitflow
 
-    # Create and clean temp directory
+    echo "⬇️ Downloading Git Flow Pro..."
     rm -rf "$TEMP_DIR"
     mkdir -p "$TEMP_DIR"
 
-    echo "⬇️ Downloading Git Flow Pro..."
     if ! git clone --quiet "$REPO_URL" "$TEMP_DIR"; then
         echo "❌ Failed to download Git Flow Pro"
         exit 1
@@ -72,5 +60,4 @@ main() {
     rm -rf "$TEMP_DIR"
 }
 
-# Run installation
 main

@@ -1,6 +1,5 @@
 #!/bin/zsh
 
-# Remote uninstaller for Git Flow Pro
 VERSION="1.0.0"
 REPO_URL="https://github.com/chornthorn/git-flow-pro.git"
 TEMP_DIR="/tmp/git-flow-pro-uninstall"
@@ -10,21 +9,18 @@ echo "=============================="
 
 # System checks
 check_requirements() {
-    # Check for zsh
     if [ -z "$ZSH_VERSION" ]; then
         echo "❌ Error: This script requires Zsh shell"
-        echo "Please install Zsh and try again"
         exit 1
     fi
 
-    # Check if Git Flow Pro is installed
     if ! grep -q "Git Flow Pro Configuration" ~/.zshrc; then
         echo "❌ Git Flow Pro is not installed"
         exit 1
     fi
 }
 
-# Main uninstall process
+# Uninstall process
 main() {
     check_requirements
 
@@ -38,11 +34,10 @@ main() {
         exit 0
     fi
 
-    # Create and clean temp directory
+    echo "⬇️ Downloading uninstaller..."
     rm -rf "$TEMP_DIR"
     mkdir -p "$TEMP_DIR"
 
-    echo "⬇️ Downloading uninstaller..."
     if ! git clone --quiet "$REPO_URL" "$TEMP_DIR"; then
         echo "❌ Failed to download Git Flow Pro"
         exit 1
@@ -55,5 +50,4 @@ main() {
     rm -rf "$TEMP_DIR"
 }
 
-# Run uninstallation
 main

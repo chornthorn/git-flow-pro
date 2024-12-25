@@ -7,21 +7,73 @@ echo "========================"
 SCRIPT_DIR=${0:a:h}
 CONFIG_PATH="$SCRIPT_DIR/../config/.zshrc-gitflow"
 
+# Function to setup Git Flow configuration
+setup_gitflow_config() {
+    echo "⚙️ Git Flow Global Configuration Setup"
+    echo "=================================="
+
+    # Default values
+    DEFAULT_MAIN="main"
+    DEFAULT_DEVELOP="develop"
+    DEFAULT_FEATURE="feature/"
+    DEFAULT_BUGFIX="bugfix/"
+    DEFAULT_HOTFIX="hotfix/"
+    DEFAULT_RELEASE="release/"
+    DEFAULT_VERSION="v"
+
+    # Get branch names and prefixes
+    echo -n "Production branch name [$DEFAULT_MAIN]: "
+    read MAIN
+    MAIN=${MAIN:-$DEFAULT_MAIN}
+
+    echo -n "Development branch name [$DEFAULT_DEVELOP]: "
+    read DEVELOP
+    DEVELOP=${DEVELOP:-$DEFAULT_DEVELOP}
+
+    echo -n "Feature branch prefix [$DEFAULT_FEATURE]: "
+    read FEATURE
+    FEATURE=${FEATURE:-$DEFAULT_FEATURE}
+
+    echo -n "Bugfix branch prefix [$DEFAULT_BUGFIX]: "
+    read BUGFIX
+    BUGFIX=${BUGFIX:-$DEFAULT_BUGFIX}
+
+    echo -n "Hotfix branch prefix [$DEFAULT_HOTFIX]: "
+    read HOTFIX
+    HOTFIX=${HOTFIX:-$DEFAULT_HOTFIX}
+
+    echo -n "Release branch prefix [$DEFAULT_RELEASE]: "
+    read RELEASE
+    RELEASE=${RELEASE:-$DEFAULT_RELEASE}
+
+    echo -n "Version tag prefix [$DEFAULT_VERSION]: "
+    read VERSION
+    VERSION=${VERSION:-$DEFAULT_VERSION}
+
+    # Save global git config
+    git config --global gitflow.branch.master "$MAIN"
+    git config --global gitflow.branch.develop "$DEVELOP"
+    git config --global gitflow.prefix.feature "$FEATURE"
+    git config --global gitflow.prefix.bugfix "$BUGFIX"
+    git config --global gitflow.prefix.hotfix "$HOTFIX"
+    git config --global gitflow.prefix.release "$RELEASE"
+    git config --global gitflow.prefix.versiontag "$VERSION"
+
+    echo "\n✅ Git Flow configuration saved globally!"
+}
+
 # Function to manage backups
 manage_backups() {
     local BACKUP_DIR="$HOME/.git-flow-pro/backups"
-    local MAX_BACKUPS=5  # Keep only last 5 backups
+    local MAX_BACKUPS=5
     
-    # Create backup directory if it doesn't exist
     mkdir -p "$BACKUP_DIR"
     
-    # Create new backup with timestamp
     local TIMESTAMP=$(date +%Y%m%d_%H%M%S)
     local NEW_BACKUP="$BACKUP_DIR/zshrc.backup.$TIMESTAMP"
     cp ~/.zshrc "$NEW_BACKUP"
     echo "📑 Backup created: zshrc.backup.$TIMESTAMP"
     
-    # Remove old backups if exceeding MAX_BACKUPS
     local backup_count=$(ls -1 "$BACKUP_DIR"/zshrc.backup.* 2>/dev/null | wc -l)
     if [ "$backup_count" -gt "$MAX_BACKUPS" ]; then
         echo "🗑️ Cleaning old backups..."
@@ -34,7 +86,6 @@ manage_backups() {
 remove_existing_config() {
     local tmp_file=$(mktemp)
     
-    # Remove configuration block and normalize empty lines
     awk '
         /# ====== Git Flow Pro Configuration/{ skip = 1; next }
         /# ====== End of Git Flow Pro Configuration/{ skip = 0; next }
@@ -49,10 +100,8 @@ remove_existing_config() {
         }
     ' ~/.zshrc > "$tmp_file"
 
-    # Remove trailing empty lines and add exactly one
     sed -i -e :a -e '/^\n*$/{$d;N;ba' -e '}' "$tmp_file"
     
-    # Replace original file
     mv "$tmp_file" ~/.zshrc
 }
 
@@ -81,6 +130,17 @@ if grep -q "Git Flow Pro Configuration" ~/.zshrc; then
     esac
 fi
 
+# Create program directories
+INSTALL_DIR="$HOME/.git-flow-pro"
+mkdir -p "$INSTALL_DIR"
+mkdir -p "$INSTALL_DIR/backups"
+mkdir -p "$INSTALL_DIR/scripts"
+
+# Copy scripts to installation directory
+echo "📦 Installing scripts..."
+cp "$SCRIPT_DIR"/*.sh "$INSTALL_DIR/scripts/"
+chmod +x "$INSTALL_DIR/scripts/"*.sh
+
 # Install configuration
 echo "⚙️ Installing Git Flow Pro configuration..."
 if [ -f "$CONFIG_PATH" ]; then
@@ -88,6 +148,13 @@ if [ -f "$CONFIG_PATH" ]; then
     cat "$CONFIG_PATH" >> ~/.zshrc
     echo "# ====== End of Git Flow Pro Configuration ======" >> ~/.zshrc
     echo "✅ Configuration added to .zshrc"
+
+    # Ask for Git Flow configuration
+    echo "\n📝 Would you like to set up Git Flow configuration now? (Y/n): "
+    read setup_flow
+    if [[ "$setup_flow" != "n" && "$setup_flow" != "N" ]]; then
+        setup_gitflow_config
+    fi
 else
     echo "❌ Error: Configuration file not found at $CONFIG_PATH"
     exit 1

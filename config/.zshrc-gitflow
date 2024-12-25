@@ -199,6 +199,24 @@ function wip() {
     echo "✅ Work in progress saved and pushed!"
 }
 
+# Git Flow initialization commands
+function initflow() {
+    if [ -f "$HOME/.git-flow-pro/scripts/init-gitflow.sh" ]; then
+        zsh "$HOME/.git-flow-pro/scripts/init-gitflow.sh"
+    else
+        echo "❌ Git Flow Pro scripts not found. Please reinstall."
+    fi
+}
+
+# Git Flow configuration commands
+function configflow() {
+    if [ -f "$HOME/.git-flow-pro/scripts/setup-gitflow-config.sh" ]; then
+        zsh "$HOME/.git-flow-pro/scripts/setup-gitflow-config.sh"
+    else
+        echo "❌ Git Flow Pro scripts not found. Please reinstall."
+    fi
+}
+
 # =================
 # Help Function
 # =================
@@ -230,6 +248,10 @@ function githelp() {
     echo "- Always create Pull Requests for merging"
     echo "- Keep branches up to date with their source"
     echo "- Use meaningful commit messages"
+    
+    echo "\n⚙️ Git Flow Configuration:"
+    echo "configflow        - Configure Git Flow settings globally"
+    echo "initflow         - Initialize Git Flow in current repository"
 }
 
 # =================
