@@ -1,25 +1,30 @@
-
 # Git Flow Pro 🚀
 
-A professional Git Flow configuration for Z shell that enhances your Git workflow with powerful features, branch protection, and automated processes.
+A professional Git Flow configuration for Zsh that enhances your Git workflow with powerful features, branch protection, and automated processes.
 
 ## ✨ Features
 
-- 🛡️ Protected Branch Workflows
+- 🛡️ **Protected Branch Workflows**
   - Prevents direct pushes to main/develop
   - Enforces pull request workflow
   - Automated branch management
 
-- 🌿 Branch Management
+- 🌿 **Branch Management**
   - Feature branch automation
   - Bugfix workflow support
   - Hotfix handling with dual PR support
 
-- ⚡ Quick Commands
+- ⚡ **Quick Commands**
   - Interactive commits
   - Work in progress saves
   - Status enhancements
   - Branch cleanup
+
+- 🔄 **Automated Workflows**
+  - Feature/Bugfix/Hotfix flows
+  - Consistent branch naming
+  - Automated publishing
+  - Clean completion process
 
 ## 🔧 Requirements
 
@@ -32,54 +37,66 @@ A professional Git Flow configuration for Z shell that enhances your Git workflo
 
 ### Quick Install
 ```bash
-git clone https://github.com/yourusername/git-flow-pro.git
-cd git-flow-pro
-./scripts/install.sh
+/bin/zsh -c "$(curl -fsSL https://raw.githubusercontent.com/chornthorn/git-flow-pro/main/scripts/remote-install.sh)"
 ```
 
-### Manual Installation
-1. Install Git Flow:
+### Update to Latest Version
 ```bash
-# macOS
-brew install git-flow
-
-# Ubuntu
-sudo apt-get install git-flow
+/bin/zsh -c "$(curl -fsSL https://raw.githubusercontent.com/chornthorn/git-flow-pro/main/scripts/remote-update.sh)"
 ```
 
-2. Copy configuration:
+### Uninstall
 ```bash
-cat config/.zshrc-gitflow >> ~/.zshrc
-source ~/.zshrc
+/bin/zsh -c "$(curl -fsSL https://raw.githubusercontent.com/chornthorn/git-flow-pro/main/scripts/remote-uninstall.sh)"
 ```
 
-## 📚 Quick Start
+## 📖 Usage
 
-1. Start new feature:
+### Feature Development
 ```bash
+# Start new feature
 feature login-system
-```
 
-2. Work on changes:
-```bash
+# Work on your feature
 work    # Commit changes with message
 # or
-wip     # Quick save
-```
+wip     # Quick save without message
 
-3. Complete feature:
-```bash
+# Complete feature
 finish  # Clean up and prepare for PR
 ```
 
-## 📖 Documentation
+### Bug Fixing
+```bash
+# Start bugfix
+bugfix user-validation
 
-- [Complete Workflow Guide](docs/WORKFLOWS.md)
-- [Command Reference](docs/COMMANDS.md)
-- [Contributing Guidelines](docs/CONTRIBUTING.md)
+# Fix the bug
+work    # Commit changes
+# or
+wip     # Quick save
 
-## 💡 Commands Overview
+# Complete bugfix
+finish  # Clean up and prepare for PR
+```
 
+### Hotfix Process
+```bash
+# Start hotfix
+hotfix 1.2.1
+
+# Fix the critical issue
+work    # Commit changes
+# or
+wip     # Quick save
+
+# Complete hotfix
+finish  # Clean up and prepare for PR
+```
+
+## 💡 Commands Reference
+
+### Core Commands
 | Command            | Description             |
 | ------------------ | ----------------------- |
 | `feature <name>`   | Start new feature       |
@@ -88,15 +105,65 @@ finish  # Clean up and prepare for PR
 | `work`             | Commit changes          |
 | `wip`              | Quick save              |
 | `finish`           | Complete current branch |
-| `githelp`          | Show all commands       |
+
+### Helper Commands
+| Command   | Description             |
+| --------- | ----------------------- |
+| `gs`      | Git status              |
+| `gl`      | Git log (pretty format) |
+| `gb`      | List branches           |
+| `githelp` | Show all commands       |
+
+## 🔐 Branch Protection
+
+| Branch      | Direct Push | PR Required   |
+| ----------- | ----------- | ------------- |
+| `main`      | ❌ No        | ✅ Yes         |
+| `develop`   | ❌ No        | ✅ Yes         |
+| `feature/*` | ✅ Yes       | ✅ Yes         |
+| `bugfix/*`  | ✅ Yes       | ✅ Yes         |
+| `hotfix/*`  | ✅ Yes       | ✅ Yes (2 PRs) |
+
+## 📝 Best Practices
+
+1. **Starting New Work**
+   ```bash
+   feature new-feature  # For features
+   bugfix fix-issue     # For bugs
+   hotfix 1.2.1        # For urgent fixes
+   ```
+
+2. **Regular Commits**
+   ```bash
+   work    # For normal commits
+   wip     # For quick saves
+   ```
+
+3. **Completing Work**
+   ```bash
+   finish  # Then create PR via web interface
+   ```
+
+## 🔄 Backup Management
+
+- Backups stored in `~/.git-flow-pro/backups/`
+- Keeps last 5 backups automatically
+- Timestamped for easy identification
+- Option to remove all backups during uninstall
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please read our [Contributing Guide](docs/CONTRIBUTING.md).
+Contributions are welcome! Please read our [Contributing Guide](docs/CONTRIBUTING.md) for details.
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to your fork
+5. Create a Pull Request
 
 ## 📜 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
@@ -107,11 +174,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 Create an issue or check [documentation](docs/) for help.
 
-<!-- 
-Would you like me to continue with the other files? I can provide:
-1. Installation scripts (install.sh, update.sh)
-2. Documentation files (WORKFLOWS.md, COMMANDS.md, CONTRIBUTING.md)
-3. GitHub templates (PR template, issue templates)
-4. License file
+## 🔄 Version History
 
-Let me know which part you'd like to see next! -->
+- v1.0.0 - Initial release
+  - Core functionality
+  - Branch protection
+  - Automated workflows
+  - Backup management
+
+---
+Made with ❤️ by [Thorn Chhorn](https://github.com/chornthorn)
