@@ -3,23 +3,42 @@
 echo "🗑️ Git Flow Pro Uninstaller"
 echo "========================="
 
+# Function to manage backups
+manage_backups() {
+    local BACKUP_DIR="$HOME/.git-flow-pro/backups"
+    local MAX_BACKUPS=5  # Keep only last 5 backups
+    
+    # Create backup directory if it doesn't exist
+    mkdir -p "$BACKUP_DIR"
+    
+    # Create new backup with timestamp
+    local TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+    local NEW_BACKUP="$BACKUP_DIR/zshrc.backup.$TIMESTAMP"
+    cp ~/.zshrc "$NEW_BACKUP"
+    echo "📑 Backup created: zshrc.backup.$TIMESTAMP"
+    
+    # Remove old backups if exceeding MAX_BACKUPS
+    local backup_count=$(ls -1 "$BACKUP_DIR"/zshrc.backup.* 2>/dev/null | wc -l)
+    if [ "$backup_count" -gt "$MAX_BACKUPS" ]; then
+        echo "🗑️ Cleaning old backups..."
+        ls -1t "$BACKUP_DIR"/zshrc.backup.* | tail -n +$((MAX_BACKUPS + 1)) | xargs rm
+        echo "✨ Kept last $MAX_BACKUPS backups"
+    fi
+}
+
 # Function to remove configuration
 remove_config() {
     local tmp_file=$(mktemp)
     
     # Remove configuration block and normalize empty lines
     awk '
-        # Remove Git Flow Pro configuration block
         /# ====== Git Flow Pro Configuration/{ skip = 1; next }
         /# ====== End of Git Flow Pro Configuration/{ skip = 0; next }
         !skip { 
-            # Store the line
             if (NF > 0) {
-                # If line is not empty, print it
                 print $0
                 empty = 0
             } else if (!empty) {
-                # Print only one empty line
                 print ""
                 empty = 1
             }
@@ -31,6 +50,15 @@ remove_config() {
     
     # Replace original file
     mv "$tmp_file" ~/.zshrc
+}
+
+# Function to remove all backups and config directory
+remove_all_backups() {
+    local BACKUP_DIR="$HOME/.git-flow-pro"
+    if [ -d "$BACKUP_DIR" ]; then
+        rm -rf "$BACKUP_DIR"
+        echo "✨ Removed all backups and configuration directory"
+    fi
 }
 
 # Check if Git Flow Pro is installed
@@ -51,13 +79,20 @@ if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
 fi
 
 # Create backup
-BACKUP_FILE=~/.zshrc.backup.$(date +%Y%m%d_%H%M%S)
-cp ~/.zshrc "$BACKUP_FILE"
-echo "📑 Backup created at: $BACKUP_FILE"
+manage_backups
 
 # Remove configuration
 echo "🗑️ Removing Git Flow Pro configuration..."
 remove_config
+
+# Ask about removing backups
+echo -n "Would you like to remove all backups? (y/N): "
+read remove_backups
+if [[ "$remove_backups" == "y" || "$remove_backups" == "Y" ]]; then
+    remove_all_backups
+else
+    echo "📂 Backups preserved in ~/.git-flow-pro/backups/"
+fi
 
 echo "✅ Git Flow Pro has been uninstalled"
 echo "🔄 Please restart your terminal or run: source ~/.zshrc"
@@ -68,10 +103,8 @@ read remove_gitflow
 
 if [[ "$remove_gitflow" == "y" || "$remove_gitflow" == "Y" ]]; then
     if [[ "$OSTYPE" == "darwin"* ]]; then
-        # macOS
         brew remove git-flow
     elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        # Linux
         sudo apt-get remove git-flow
     else
         echo "❌ Please remove git-flow manually for your system"
