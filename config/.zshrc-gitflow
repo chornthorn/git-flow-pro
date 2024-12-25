@@ -1,0 +1,259 @@
+# =============================================
+# Git Flow Pro Configuration
+# Version: 1.0.0
+# License: MIT
+# =============================================
+
+# =================
+# Core Git Aliases
+# =================
+alias g='git'
+alias gs='git status'
+alias ga='git add .'
+alias gr='git reset'
+alias gd='git diff'
+alias gpl='git pull origin $(git symbolic-ref --short HEAD)'
+alias gb='git branch'
+alias gba='git branch -a'
+alias gco='git checkout'
+alias gl='git log --oneline --graph --decorate --all -10'
+
+# =================
+# Branch Protection
+# =================
+function protected_branch() {
+    if [ "$1" = "main" ] || [ "$1" = "develop" ]; then
+        echo "❌ Direct push to $1 is not allowed. Please create a PR."
+        return 1
+    fi
+    return 0
+}
+
+# Override git push for protection
+function git() {
+    if [[ "$1" = "push" && "$2" = "origin" ]]; then
+        current_branch=$(git symbolic-ref --short HEAD)
+        if ! protected_branch "$current_branch"; then
+            return 1
+        fi
+    fi
+    command git "$@"
+}
+
+# =================
+# Feature Functions
+# =================
+function feature() {
+    if [ "$1" ]; then
+        echo "🔄 Updating develop branch..."
+        git checkout develop
+        git pull origin develop
+        
+        echo "🌟 Creating feature branch: feature/$1"
+        git flow feature start "$1"
+        
+        echo "⬆️ Publishing feature branch..."
+        git flow feature publish "$1"
+        
+        echo "✅ Feature branch created and published: feature/$1"
+        echo "👉 Start working on your feature!"
+    else
+        echo "❌ Feature name is required"
+        echo "Usage: feature <feature-name>"
+        echo "Example: feature user-auth"
+        return 1
+    fi
+}
+
+# =================
+# Bugfix Functions
+# =================
+function bugfix() {
+    if [ "$1" ]; then
+        echo "🔄 Updating develop branch..."
+        git checkout develop
+        git pull origin develop
+        
+        echo "🐛 Creating bugfix branch: bugfix/$1"
+        git flow bugfix start "$1"
+        
+        echo "⬆️ Publishing bugfix branch..."
+        git flow bugfix publish "$1"
+        
+        echo "✅ Bugfix branch created and published: bugfix/$1"
+        echo "👉 Start fixing the bug!"
+    else
+        echo "❌ Bugfix name is required"
+        echo "Usage: bugfix <bugfix-name>"
+        echo "Example: bugfix login-issue"
+        return 1
+    fi
+}
+
+# =================
+# Hotfix Functions
+# =================
+function hotfix() {
+    if [ "$1" ]; then
+        echo "🔄 Updating main branch..."
+        git checkout main
+        git pull origin main
+        
+        echo "🚑 Creating hotfix branch: hotfix/$1"
+        git flow hotfix start "$1"
+        
+        echo "⬆️ Publishing hotfix branch..."
+        git flow hotfix publish "$1"
+        
+        echo "✅ Hotfix branch created and published: hotfix/$1"
+        echo "👉 Start working on the hotfix!"
+    else
+        echo "❌ Hotfix version is required"
+        echo "Usage: hotfix <version>"
+        echo "Example: hotfix 1.2.1"
+        return 1
+    fi
+}
+
+# =================
+# Workflow Functions
+# =================
+# Finish any type of branch
+function finish() {
+    current_branch=$(git symbolic-ref --short HEAD)
+    
+    if [[ $current_branch == feature/* ]]; then
+        branch_type="feature"
+        target_branch="develop"
+        branch_name=$(echo $current_branch | sed 's/feature\///')
+    elif [[ $current_branch == bugfix/* ]]; then
+        branch_type="bugfix"
+        target_branch="develop"
+        branch_name=$(echo $current_branch | sed 's/bugfix\///')
+    elif [[ $current_branch == hotfix/* ]]; then
+        branch_type="hotfix"
+        target_branch="main"
+        branch_name=$(echo $current_branch | sed 's/hotfix\///')
+    else
+        echo "❌ Not a feature/bugfix/hotfix branch. Current branch: $current_branch"
+        return 1
+    fi
+    
+    echo "🔄 Ensuring all changes are pushed..."
+    git push origin $current_branch
+    
+    echo "⬇️ Switching to $target_branch..."
+    git checkout $target_branch
+    git pull origin $target_branch
+    
+    echo "🗑️ Cleaning up local branch..."
+    git branch -D "$current_branch"
+    
+    echo "✅ Workflow completed!"
+    echo "⚠️ Remember to create a Pull Request on GitHub/GitLab!"
+    
+    if [[ $branch_type == "hotfix" ]]; then
+        echo "⚠️ For hotfix: Create TWO Pull Requests:"
+        echo "   1. hotfix/$branch_name → main"
+        echo "   2. hotfix/$branch_name → develop"
+    fi
+}
+
+# Standard commit workflow
+function work() {
+    current_branch=$(git symbolic-ref --short HEAD)
+    if ! protected_branch "$current_branch"; then
+        return 1
+    fi
+    
+    echo "📊 Git Status:"
+    git status
+    
+    echo "\n⬆️ Adding changes..."
+    git add .
+    
+    echo "\n💭 Enter commit message:"
+    read commit_msg
+    
+    if [ "$commit_msg" ]; then
+        git commit -m "$commit_msg"
+        echo "\n🚀 Pushing to $current_branch..."
+        git push origin $current_branch
+        echo "✅ Changes pushed successfully!"
+    else
+        echo "❌ Operation cancelled: no commit message"
+        return 1
+    fi
+}
+
+# Quick save work in progress
+function wip() {
+    current_branch=$(git symbolic-ref --short HEAD)
+    if ! protected_branch "$current_branch"; then
+        return 1
+    fi
+    
+    git add .
+    git commit -m "WIP: Quick save $(date +%Y-%m-%d_%H-%M-%S)"
+    git push origin $current_branch
+    echo "✅ Work in progress saved and pushed!"
+}
+
+# =================
+# Help Function
+# =================
+function githelp() {
+    echo "\n🔥 Git Flow Pro Commands:"
+    echo "=========================="
+    echo "\n📌 Branch Creation:"
+    echo "feature <name>    - Start new feature from develop"
+    echo "bugfix <name>     - Start bugfix from develop"
+    echo "hotfix <version>  - Start hotfix from main"
+    
+    echo "\n💻 Work Commands:"
+    echo "work             - Add, commit, and push changes"
+    echo "wip              - Quick save work in progress"
+    echo "finish           - Complete current branch and cleanup"
+    
+    echo "\n📊 Status Commands:"
+    echo "gs               - Git status"
+    echo "gl               - Git log (pretty format)"
+    echo "gb               - List local branches"
+    echo "gba              - List all branches"
+    
+    echo "\n⚠️ Branch Rules:"
+    echo "Features/Bugfixes: develop → branch → develop (via PR)"
+    echo "Hotfixes: main → branch → main & develop (via 2 PRs)"
+    
+    echo "\n❗️Important:"
+    echo "- Never push directly to main or develop"
+    echo "- Always create Pull Requests for merging"
+    echo "- Keep branches up to date with their source"
+    echo "- Use meaningful commit messages"
+}
+
+# =================
+# Auto-completion
+# =================
+autoload -Uz compinit && compinit
+
+# =================
+# Git Flow Init Check
+# =================
+# Check if git flow is initialized in the current repository
+function check_gitflow() {
+    if [ ! -f "$(git rev-parse --git-dir)/config" ] || ! grep -q "gitflow" "$(git rev-parse --git-dir)/config"; then
+        echo "⚠️ Git Flow not initialized in this repository."
+        echo "Run 'git flow init' to set up Git Flow."
+        return 1
+    fi
+    return 0
+}
+
+# =================
+# Version
+# =================
+function gitflow_pro_version() {
+    echo "Git Flow Pro v1.0.0"
+    echo "For updates, visit: https://github.com/chornthorn/git-flow-pro"
+}

@@ -1,0 +1,16 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Zsh
+*.zwc
+*.zwc.old
+
+# Backup files
+*.backup
+*~
