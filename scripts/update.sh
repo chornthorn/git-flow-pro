@@ -3,6 +3,29 @@
 echo "🔄 Git Flow Pro Updater"
 echo "====================="
 
+# Function to manage backups
+manage_backups() {
+    local BACKUP_DIR="$HOME/.git-flow-pro/backups"
+    local MAX_BACKUPS=5  # Keep only last 5 backups
+    
+    # Create backup directory if it doesn't exist
+    mkdir -p "$BACKUP_DIR"
+    
+    # Create new backup with timestamp
+    local TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+    local NEW_BACKUP="$BACKUP_DIR/zshrc.backup.$TIMESTAMP"
+    cp ~/.zshrc "$NEW_BACKUP"
+    echo "📑 Backup created: zshrc.backup.$TIMESTAMP"
+    
+    # Remove old backups if exceeding MAX_BACKUPS
+    local backup_count=$(ls -1 "$BACKUP_DIR"/zshrc.backup.* 2>/dev/null | wc -l)
+    if [ "$backup_count" -gt "$MAX_BACKUPS" ]; then
+        echo "🗑️ Cleaning old backups..."
+        ls -1t "$BACKUP_DIR"/zshrc.backup.* | tail -n +$((MAX_BACKUPS + 1)) | xargs rm
+        echo "✨ Kept last $MAX_BACKUPS backups"
+    fi
+}
+
 # Function to remove existing configuration
 remove_existing_config() {
     local tmp_file=$(mktemp)
@@ -13,13 +36,10 @@ remove_existing_config() {
         /# ====== Git Flow Pro Configuration/{ skip = 1; next }
         /# ====== End of Git Flow Pro Configuration/{ skip = 0; next }
         !skip { 
-            # Store the line
             if (NF > 0) {
-                # If line is not empty, print it
                 print $0
                 empty = 0
             } else if (!empty) {
-                # Print only one empty line
                 print ""
                 empty = 1
             }
@@ -39,6 +59,9 @@ if ! grep -q "Git Flow Pro Configuration" ~/.zshrc; then
     echo "Please run the installer first"
     exit 1
 fi
+
+# Create backup before making changes
+manage_backups
 
 REPO_URL="https://github.com/chornthorn/git-flow-pro.git"
 TEMP_DIR="/tmp/git-flow-pro-update"

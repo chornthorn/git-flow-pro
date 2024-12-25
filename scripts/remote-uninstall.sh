@@ -29,7 +29,7 @@ main() {
     check_requirements
 
     echo "⚠️ This will remove Git Flow Pro configuration from your system."
-    echo "A backup of your current .zshrc will be created."
+    echo "A backup will be created in ~/.git-flow-pro/backups/"
     echo -n "Continue? (y/N): "
     read confirm
 

@@ -30,6 +30,9 @@ check_requirements() {
         echo "Please install either curl or wget and try again"
         exit 1
     fi
+
+    # Ensure backup directory exists
+    mkdir -p "$HOME/.git-flow-pro/backups"
 }
 
 # Install git-flow if needed
@@ -63,7 +66,6 @@ main() {
     fi
 
     echo "⚙️ Running installer..."
-    # Using the install.sh from the same directory
     zsh "$TEMP_DIR/scripts/install.sh"
 
     # Cleanup

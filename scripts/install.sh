@@ -1,13 +1,5 @@
 #!/bin/zsh
 
-# Ensure running in Zsh
-if [ -z "$ZSH_VERSION" ]; then
-    echo "❌ Error: Please run this script with Zsh"
-    echo "Current shell: $SHELL"
-    echo "Try: zsh ./scripts/install.sh"
-    exit 1
-fi
-
 echo "🚀 Git Flow Pro Installer"
 echo "========================"
 
@@ -15,23 +7,42 @@ echo "========================"
 SCRIPT_DIR=${0:a:h}
 CONFIG_PATH="$SCRIPT_DIR/../config/.zshrc-gitflow"
 
-# Function to remove existing configuration and normalize empty lines
+# Function to manage backups
+manage_backups() {
+    local BACKUP_DIR="$HOME/.git-flow-pro/backups"
+    local MAX_BACKUPS=5  # Keep only last 5 backups
+    
+    # Create backup directory if it doesn't exist
+    mkdir -p "$BACKUP_DIR"
+    
+    # Create new backup with timestamp
+    local TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+    local NEW_BACKUP="$BACKUP_DIR/zshrc.backup.$TIMESTAMP"
+    cp ~/.zshrc "$NEW_BACKUP"
+    echo "📑 Backup created: zshrc.backup.$TIMESTAMP"
+    
+    # Remove old backups if exceeding MAX_BACKUPS
+    local backup_count=$(ls -1 "$BACKUP_DIR"/zshrc.backup.* 2>/dev/null | wc -l)
+    if [ "$backup_count" -gt "$MAX_BACKUPS" ]; then
+        echo "🗑️ Cleaning old backups..."
+        ls -1t "$BACKUP_DIR"/zshrc.backup.* | tail -n +$((MAX_BACKUPS + 1)) | xargs rm
+        echo "✨ Kept last $MAX_BACKUPS backups"
+    fi
+}
+
+# Function to remove existing configuration
 remove_existing_config() {
     local tmp_file=$(mktemp)
     
     # Remove configuration block and normalize empty lines
     awk '
-        # Remove Git Flow Pro configuration block
         /# ====== Git Flow Pro Configuration/{ skip = 1; next }
         /# ====== End of Git Flow Pro Configuration/{ skip = 0; next }
         !skip { 
-            # Store the line
             if (NF > 0) {
-                # If line is not empty, print it
                 print $0
                 empty = 0
             } else if (!empty) {
-                # Print only one empty line
                 print ""
                 empty = 1
             }
@@ -56,13 +67,7 @@ if grep -q "Git Flow Pro Configuration" ~/.zshrc; then
     case $choice in
         1)
             echo "📝 Proceeding with reinstallation..."
-            # Create timestamped backup
-            BACKUP_FILE=~/.zshrc.backup.$(date +%Y%m%d_%H%M%S)
-            cp ~/.zshrc "$BACKUP_FILE"
-            echo "📑 Backup created at: $BACKUP_FILE"
-            
-            # Remove existing configuration
-            echo "🗑️ Removing existing configuration..."
+            manage_backups
             remove_existing_config
             ;;
         2)
@@ -76,40 +81,9 @@ if grep -q "Git Flow Pro Configuration" ~/.zshrc; then
     esac
 fi
 
-# Check for git
-if ! command -v git >/dev/null 2>&1; then
-    echo "❌ Error: Git is not installed"
-    echo "Please install Git and try again"
-    exit 1
-fi
-
-# Check for git-flow
-if ! command -v git-flow >/dev/null 2>&1; then
-    echo "❌ Error: Git Flow is not installed"
-    echo "Installing Git Flow..."
-    
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        # macOS
-        brew install git-flow
-    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        # Linux
-        sudo apt-get update
-        sudo apt-get install git-flow
-    else
-        echo "❌ Error: Unsupported operating system"
-        echo "Please install Git Flow manually"
-        exit 1
-    fi
-fi
-
 # Install configuration
 echo "⚙️ Installing Git Flow Pro configuration..."
 if [ -f "$CONFIG_PATH" ]; then
-    # Ensure exactly one empty line at the end of .zshrc
-    sed -i -e :a -e '/^\n*$/{$d;N;ba' -e '}' ~/.zshrc
-    echo "" >> ~/.zshrc
-    
-    # Add configuration
     echo "# ====== Git Flow Pro Configuration ($(date +%Y-%m-%d)) ======" >> ~/.zshrc
     cat "$CONFIG_PATH" >> ~/.zshrc
     echo "# ====== End of Git Flow Pro Configuration ======" >> ~/.zshrc
