@@ -6,7 +6,30 @@ echo "====================="
 # Function to remove existing configuration
 remove_existing_config() {
     local tmp_file=$(mktemp)
-    awk '/# ====== Git Flow Pro Configuration/{flag=1;next}/# ====== End of Git Flow Pro Configuration/{flag=0;next}flag!=1{print}' ~/.zshrc > "$tmp_file"
+    
+    # Remove configuration block and normalize empty lines
+    awk '
+        # Remove Git Flow Pro configuration block
+        /# ====== Git Flow Pro Configuration/{ skip = 1; next }
+        /# ====== End of Git Flow Pro Configuration/{ skip = 0; next }
+        !skip { 
+            # Store the line
+            if (NF > 0) {
+                # If line is not empty, print it
+                print $0
+                empty = 0
+            } else if (!empty) {
+                # Print only one empty line
+                print ""
+                empty = 1
+            }
+        }
+    ' ~/.zshrc > "$tmp_file"
+
+    # Remove trailing empty lines and add exactly one
+    sed -i -e :a -e '/^\n*$/{$d;N;ba' -e '}' "$tmp_file"
+    
+    # Replace original file
     mv "$tmp_file" ~/.zshrc
 }
 
@@ -27,7 +50,10 @@ fi
 
 # Clone latest version
 echo "⬇️ Downloading latest version..."
-git clone "$REPO_URL" "$TEMP_DIR"
+if ! git clone "$REPO_URL" "$TEMP_DIR" 2>/dev/null; then
+    echo "❌ Failed to download updates"
+    exit 1
+fi
 
 # Create timestamped backup
 BACKUP_FILE=~/.zshrc.backup.$(date +%Y%m%d_%H%M%S)
@@ -40,9 +66,10 @@ remove_existing_config
 
 # Add new configuration
 echo "🔄 Installing new configuration..."
-echo "\n# ====== Git Flow Pro Configuration ($(date +%Y-%m-%d)) ======" >> ~/.zshrc
+echo "" >> ~/.zshrc
+echo "# ====== Git Flow Pro Configuration ($(date +%Y-%m-%d)) ======" >> ~/.zshrc
 cat "$TEMP_DIR/config/.zshrc-gitflow" >> ~/.zshrc
-echo "\n# ====== End of Git Flow Pro Configuration ======" >> ~/.zshrc
+echo "# ====== End of Git Flow Pro Configuration ======" >> ~/.zshrc
 
 # Cleanup
 rm -rf "$TEMP_DIR"
