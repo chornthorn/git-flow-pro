@@ -1,0 +1,105 @@
+name: Test
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup environment
+        run: |
+          brew install zsh git-flow
+          echo "Current shell: $SHELL"
+          echo "Zsh version: $(zsh --version)"
+          echo "Git version: $(git --version)"
+          echo "Git Flow version: $(git-flow version)"
+
+      - name: Test Installation
+        run: |
+          # Create test zshrc
+          touch ~/.zshrc
+
+          # Run installation
+          zsh ./scripts/install.sh || exit 1
+
+          # Verify installation
+          if ! grep -q "Git Flow Pro Configuration" ~/.zshrc; then
+            echo "❌ Installation failed: Configuration not found in .zshrc"
+            exit 1
+          fi
+
+          echo "✅ Installation successful"
+
+      - name: Test Commands
+        run: |
+          # Source configuration
+          source ~/.zshrc
+
+          # Test basic commands
+          githelp || exit 1
+          gitflow_pro_version || exit 1
+
+          # Initialize test repository
+          mkdir test-repo && cd test-repo
+          git init
+          git config --global user.email "test@example.com"
+          git config --global user.name "Test User"
+
+          # Test feature workflow
+          feature test-feature || exit 1
+          echo "test" > test.txt
+          work || exit 1
+          finish || exit 1
+
+          echo "✅ Commands test successful"
+
+      - name: Test Update
+        run: |
+          zsh ./scripts/update.sh || exit 1
+          source ~/.zshrc
+          githelp || exit 1
+          echo "✅ Update successful"
+
+      - name: Test Uninstall
+        run: |
+          # Test uninstallation
+          echo "y" | zsh ./scripts/uninstall.sh || exit 1
+
+          # Verify uninstallation
+          if grep -q "Git Flow Pro Configuration" ~/.zshrc; then
+            echo "❌ Uninstallation failed: Configuration still present in .zshrc"
+            exit 1
+          fi
+
+          echo "✅ Uninstallation successful"
+
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -rf test-repo
+          rm -rf ~/.git-flow-pro
+          rm -f ~/.zshrc
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Check shell scripts
+        run: |
+          shellcheck scripts/*.sh || exit 1
+
+      - name: Check file permissions
+        run: |
+          test -x scripts/install.sh
+          test -x scripts/update.sh
+          test -x scripts/uninstall.sh
+          test -x scripts/remote-install.sh
+          test -x scripts/remote-update.sh
+          test -x scripts/remote-uninstall.sh

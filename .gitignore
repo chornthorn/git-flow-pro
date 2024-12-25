@@ -1,16 +1,12 @@
 # macOS
 .DS_Store
-.AppleDouble
-.LSOverride
 
-# VS Code
-.vscode/
-*.code-workspace
-
-# Zsh
-*.zwc
-*.zwc.old
+# Test files
+test-repo/
 
 # Backup files
 *.backup
 *~
+
+# Release files
+*.tar.gz
